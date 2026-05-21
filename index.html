@@ -2,8 +2,8 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sonic Dash Mini-Game - Versão Ajustada</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sonic Dash Mini-Game - Versão Celular</title>
     <style>
         body {
             margin: 0;
@@ -13,16 +13,30 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start; /* Alinha para cima em telas pequenas */
             min-height: 100vh;
             color: white;
             overflow: hidden;
+            touch-action: manipulation; /* Melhora a resposta ao toque */
+        }
+
+        /* Container que centraliza e ajusta o tamanho total do jogo */
+        #game-container {
+            width: 100%;
+            max-width: 600px;
+            margin: 10px auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         #game-box {
             position: relative;
-            width: 600px;
-            height: 300px;
+            /* Faz o jogo manter a proporção e ocupar a largura da tela */
+            width: 95vmin; 
+            max-width: 600px;
+            height: 47.5vmin; /* Metade da largura para manter proporção 2:1 */
+            max-height: 300px;
             background: linear-gradient(to bottom, #4da6ff, #99ccff 70%, #008000 70%, #8b5a2b 75%);
             border: 4px solid #0055ff;
             border-radius: 8px;
@@ -30,64 +44,81 @@
             box-shadow: 0 0 20px rgba(0, 85, 255, 0.5);
         }
 
+        /* Nuvens ao fundo */
         .cloud {
             position: absolute;
             background: white;
-            width: 80px;
-            height: 30px;
+            width: 12.6vmin; 
+            max-width: 80px;
+            height: 4.7vmin;
+            max-height: 30px;
             border-radius: 20px;
-            top: 40px;
-            animation: moveLeft 12s linear infinite; /* Nuvens mais lentas */
+            top: 6vmin;
+            animation: moveLeft 12s linear infinite;
         }
 
+        /* Chão quadriculado simulado */
         #floor-grid {
             position: absolute;
             bottom: 0;
             width: 200%;
-            height: 90px;
+            height: 14.2vmin; /* Ajustado proporcionalmente */
+            max-height: 90px;
             background-image: linear-gradient(45deg, #5c3a21 25%, transparent 25%), 
                               linear-gradient(-45deg, #5c3a21 25%, transparent 25%), 
                               linear-gradient(45deg, transparent 75%, #4a2f1a 75%), 
                               linear-gradient(-45deg, transparent 75%, #4a2f1a 75%);
-            background-size: 30px 30px;
-            animation: scrollBackground 0.8s linear infinite; /* Chão correndo mais suave */
+            background-size: 4.7vmin 4.7vmin; /* Ajustado */
+            max-background-size: 30px 30px;
+            animation: scrollBackground 0.8s linear infinite;
         }
 
+        /* O Sonic (Representação Visual Animada) */
         #sonic {
             position: absolute;
-            left: 50px;
-            bottom: 85px;
-            width: 40px;
-            height: 40px;
+            left: 8vmin;
+            bottom: 13.5vmin;
+            width: 6.3vmin; /* Menor em telas pequenas */
+            max-width: 40px;
+            height: 6.3vmin;
+            max-height: 40px;
             background: #0055ff;
             border-radius: 50%;
             border: 3px solid white;
-            box-shadow: -5px 0 0 #ffcc00; 
+            box-shadow: -0.8vmin 0 0 #ffcc00; /* Sapato proporcional */
             transition: transform 0.12s ease-out;
+            z-index: 2;
         }
 
+        /* Animação de corrida do Sonic */
         .running {
-            animation: spin 0.3s linear infinite; /* Rotação do Sonic mais suave */
+            animation: spin 0.3s linear infinite;
         }
 
+        /* Obstáculo Terrestre (Motobug) */
         #obstacle {
             position: absolute;
-            right: -40px;
-            bottom: 85px;
-            width: 35px;
-            height: 35px;
+            right: -6.3vmin;
+            bottom: 13.5vmin;
+            width: 5.5vmin;
+            max-width: 35px;
+            height: 5.5vmin;
+            max-height: 35px;
             background: #ff3333;
             border-radius: 6px;
             border: 2px solid black;
+            z-index: 1;
         }
 
+        /* HUD */
         #hud {
             position: absolute;
-            top: 10px;
-            left: 10px;
+            top: 2vmin;
+            left: 2vmin;
             font-weight: bold;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             text-shadow: 2px 2px black;
+            z-index: 3;
         }
 
         #game-over-screen {
@@ -98,24 +129,31 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
+            z-index: 4;
         }
 
+        /* Controles */
         #controls {
-            margin-top: 20px;
+            margin-top: 15px;
             display: flex;
-            gap: 20px;
+            gap: 15px;
+            width: 95vmin;
+            max-width: 600px;
+            justify-content: center;
         }
 
         .btn {
             background: #0055ff;
             color: white;
             border: 2px solid #00aaff;
-            padding: 15px 30px;
-            font-size: 1.2rem;
+            padding: 12px 25px;
+            font-size: 1.1rem;
             font-weight: bold;
             cursor: pointer;
             border-radius: 8px;
             box-shadow: 0 4px 0 #002288;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         .btn:active {
@@ -124,13 +162,13 @@
         }
 
         @keyframes moveLeft {
-            from { right: -100px; }
-            to { right: 700px; }
+            from { right: -15vmin; }
+            to { right: 110%; }
         }
 
         @keyframes scrollBackground {
             from { transform: translateX(0); }
-            to { transform: translateX(-30px); }
+            to { transform: translateX(-4.7vmin); }
         }
 
         @keyframes spin {
@@ -141,27 +179,29 @@
 </head>
 <body>
 
-    <h2 style="margin-bottom: 10px;">🦔 SONIC ACTION DASH 🦔</h2>
-    <p style="margin-bottom: 15px; color: #aaa;">Versão Ajustada: Ritmo mais tranquilo!</p>
+    <div id="game-container">
+        <h2 style="margin-bottom: 5px; font-size: 1.3rem;">🦔 SONIC DASH - MÓVEL 🦔</h2>
+        <p style="margin-bottom: 10px; color: #aaa; font-size: 0.9rem;">Toque no botão ou na tela para pular!</p>
 
-    <div id="game-box">
-        <div class="cloud" style="top: 30px; animation-duration: 14s;"></div>
-        <div class="cloud" style="top: 70px; animation-duration: 9s; right: 200px;"></div>
-        <div id="floor-grid"></div>
-        
-        <div id="sonic" class="running"></div>
-        <div id="obstacle"></div>
+        <div id="game-box">
+            <div class="cloud" style="top: 5vmin; animation-duration: 14s;"></div>
+            <div class="cloud" style="top: 11vmin; animation-duration: 9s; right: 30vmin;"></div>
+            <div id="floor-grid"></div>
+            
+            <div id="sonic" class="running"></div>
+            <div id="obstacle"></div>
 
-        <div id="hud">SCORE: <span id="score">0</span></div>
+            <div id="hud">SCORE: <span id="score">0</span></div>
 
-        <div id="game-over-screen">
-            <h1 style="color: #ff3333; margin-bottom: 10px;">💥 GAME OVER 💥</h1>
-            <button class="btn" onclick="resetGame()">TENTAR DE NOVO</button>
+            <div id="game-over-screen">
+                <h1 style="color: #ff3333; margin-bottom: 10px; font-size: 1.8rem;">💥 GAME OVER 💥</h1>
+                <button class="btn" onclick="resetGame()">TENTAR DE NOVO</button>
+            </div>
         </div>
-    </div>
 
-    <div id="controls">
-        <button class="btn" onclick="jump()">PULAR ⬆️</button>
+        <div id="controls">
+            <button class="btn" id="jumpBtn">PULAR ⬆️</button>
+        </div>
     </div>
 
     <script>
@@ -169,35 +209,47 @@
         const obstacle = document.getElementById("obstacle");
         const scoreLabel = document.getElementById("score");
         const gameOverScreen = document.getElementById("game-over-screen");
+        const gameBox = document.getElementById("game-box");
+        const jumpBtn = document.getElementById("jumpBtn");
 
         let score = 0;
         let isJumping = false;
         let isGameOver = false;
         
-        // MUDANÇAS DE VELOCIDADE AQUI:
-        let initialSpeed = 3.5;  // Começava em 5, agora começa bem mais calmo em 3.5
+        let initialSpeed = 3.5; 
         let obstacleSpeed = initialSpeed;
-        let obstaclePosition = 600;
+        
+        // Posição proporcional ao invés de fixa
+        let gameWidth = gameBox.clientWidth;
+        let obstaclePosition = gameWidth;
+
+        function updateGameSize() {
+            gameWidth = gameBox.clientWidth;
+        }
+        window.addEventListener('resize', updateGameSize);
+        updateGameSize();
 
         function gameLoop() {
             if (isGameOver) return;
 
             obstaclePosition -= obstacleSpeed;
-            if (obstaclePosition < -40) {
-                obstaclePosition = 600; 
+            if (obstaclePosition < -obstacle.clientWidth) {
+                obstaclePosition = gameWidth; 
                 score += 10;
                 scoreLabel.innerText = score;
                 
-                // O jogo acelera muito menos a cada ponto feito:
                 if (obstacleSpeed < 7.5) obstacleSpeed += 0.2; 
             }
             obstacle.style.left = obstaclePosition + "px";
 
-            let sonicBottom = parseInt(window.getComputedStyle(sonic).getPropertyValue("bottom"));
+            // Lógica de colisão proporcional
+            let sonicRect = sonic.getBoundingClientRect();
+            let obstacleRect = obstacle.getBoundingClientRect();
             
-            // Margem de colisão ligeiramente ajustada para ser mais justa
-            if (obstaclePosition > 52 && obstaclePosition < 88 && sonicBottom <= 110) {
-                endGame();
+            if (sonicRect.right > obstacleRect.left &&
+                sonicRect.left < obstacleRect.right &&
+                sonicRect.bottom > obstacleRect.top) {
+                    endGame();
             }
 
             requestAnimationFrame(gameLoop);
@@ -208,18 +260,17 @@
             isJumping = true;
             sonic.classList.remove("running"); 
             
-            // O pulo dura um pouquinho mais para dar tempo de desviar fácil
-            sonic.style.transform = "translateY(-105px)";
-            sonic.style.bottom = "190px";
+            // Pulo proporcional à altura do jogo
+            let jumpHeight = gameBox.clientHeight * 0.35; // Pula 35% da altura
+            sonic.style.transform = `translateY(-${jumpHeight}px)`;
 
             setTimeout(() => {
                 sonic.style.transform = "translateY(0)";
-                sonic.style.bottom = "85px";
                 setTimeout(() => {
                     if (!isGameOver) sonic.classList.add("running");
                     isJumping = false;
                 }, 100);
-            }, 450); // Tempo no ar suavemente estendido
+            }, 450);
         }
 
         function endGame() {
@@ -231,7 +282,7 @@
         function resetGame() {
             score = 0;
             obstacleSpeed = initialSpeed;
-            obstaclePosition = 600;
+            obstaclePosition = gameWidth;
             isGameOver = false;
             gameOverScreen.style.display = "none";
             sonic.classList.add("running");
@@ -239,8 +290,24 @@
             gameLoop();
         }
 
+        // Suporte para teclado (barra de espaço)
         document.addEventListener("keydown", (event) => {
             if (event.code === "Space") {
+                jump();
+            }
+        });
+
+        // Suporte para toque no botão
+        jumpBtn.addEventListener("touchstart", (e) => {
+            e.preventDefault();
+            jump();
+        });
+        jumpBtn.addEventListener("click", jump);
+
+        // Suporte para toque em qualquer lugar da tela do jogo
+        gameBox.addEventListener("touchstart", (e) => {
+            // Se não for o botão de reiniciar
+            if (e.target !== gameOverScreen && !gameOverScreen.contains(e.target)) {
                 jump();
             }
         });
