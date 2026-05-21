@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sonic the Hedgehog - Text RPG</title>
+    <style>
+        /* Reset e Fontes */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        body {
+            background-color: #002244;
+            background-image: linear-gradient(180deg, #0044cc 0%, #001122 100%);
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* Container do Jogo */
+        #game-container {
+            background: rgba(0, 0, 0, 0.85);
+            width: 100%;
+            max-width: 700px;
+            border: 4px solid #0055ff;
+            border-radius: 12px;
+            box-shadow: 0 0 20px rgba(0, 85, 255, 0.5);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Painel de Status (HUD) */
+        #hud {
+            background: #111;
+            padding: 15px;
+            border-bottom: 4px dashed #0055ff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .hud-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .rings-count {
+            color: #ffe600;
+            text-shadow: 0 0 5px rgba(255, 230, 0, 0.5);
+        }
+
+        .zone-title {
+            color: #00ffcc;
+        }
+
+        /* Tela de Texto */
+        #text-screen {
+            padding: 25px;
+            min-height: 250px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        #text-screen p {
+            margin-bottom: 15px;
+        }
+
+        .highlight {
+            color: #ff3366;
+            font-weight: bold;
+        }
+
+        .action-text {
+            color: #00ff66;
+            font-style: italic;
+        }
+
+        /* Painel de Controles/Botões */
+        #choices-container {
+            padding: 20px;
+            background: #0a0a0a;
+            border-top: 2px solid #222;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* Botões */
+        button {
+            background: linear-gradient(135deg, #0055ff 0%, #0022aa 100%);
+            color: white;
+            border: 2px solid #00aaff;
+            border-radius: 6px;
+            padding: 14px 20px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s ease;
+            box-shadow: 0 3px 0 #001155;
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, #0077ff 0%, #0033cc 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 0 #001155;
+        }
+
+        button:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 0 #001155;
+        }
+
+        /* Input para Personagem Customizado */
+        #custom-input-container {
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            padding: 15px;
+            background: #151515;
+            border-radius: 6px;
+            border: 1px solid #333;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            font-size: 1rem;
+            border-radius: 4px;
+            border: 2px solid #0055ff;
+            background: #222;
+            color: white;
+        }
+
+        /* Barra de Rolagem Personalizada */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #050505;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #0055ff;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <!-- HUD / Status -->
+        <div id="hud">
+            <div class="hud-item">PERSONAGEM: <span id="hud-char" style="color: #00ff66;">-</span></div>
+            <div class="hud-item">ZONE: <span id="hud-zone" class="zone-title">MENU</span></div>
+            <div class="hud-item">RINGS: <span id="hud-rings" class="rings-count">00</span></div>
+        </div>
+
+        <!-- Tela de Narrativa -->
+        <div id="text-screen">
+            <!-- O texto dinâmico entra aqui via JS -->
+        </div>
+
+        <!-- Inputs Customizados (Escondidos por padrão) -->
+        <div id="custom-input-container">
+            <label for="custom-name">Nome do seu Herói:</label>
+            <input type="text" id="custom-name" placeholder="Ex: Shadow o Ouriço">
+            <label for="custom-skill">Habilidade Especial:</label>
+            <input type="text" id="custom-skill" placeholder="Ex: Controle do Caos">
+            <button onclick="confirmCustomCharacter()" style="text-align: center;">DAR A LARGADA!</button>
+        </div>
+
+        <!-- Opções de Escolha -->
+        <div id="choices-container">
+            <!-- Botões dinâmicos entram aqui via JS -->
+        </div>
+    </div>
+
+    <script>
+        // Estado Global do Jogo
+        let gameState = {
+            character: "",
+            ability: "",
+            rings: 0,
+            currentZone: "MENU",
+            currentStep: "character_select"
+        };
+
+        // Elementos do DOM
+        const textScreen = document.getElementById("text-screen");
+        const choicesContainer = document.getElementById("choices-container");
+        const customInputContainer = document.getElementById("custom-input-container");
+        const hudChar = document.getElementById("hud-char");
+        const hudZone = document.getElementById("hud-zone");
+        const hudRings = document.getElementById("hud-rings");
+
+        // Inicializa o Jogo
+        function initGame() {
+            updateHUD();
+            showText("🎵 *A música clássica de introdução começa a tocar em uma batida de 16-bits totalmente repaginada e cheia de energia!* O céu está azul, o sol brilha sobre as colinas quadriculadas e você sente aquela adrenalina pura dos anos 90!<br><br><strong>BEM-VINDO AO SONIC RPG INTERATIVO!</strong><br><br>O infame Dr. Eggman está raptando os animaizinhos indefesos para transformá-los em Badniks mecânicos. Cabe a você estragar os planos daquele ovo com bigode!<br><br><span class='highlight'>SELECT YOUR CHARACTER:</span>");
+            
+            setChoices([
+                { text: "1. Sonic o Ouriço (Velocidade Máxima / Spin Dash)", action: () => selectCharacter("Sonic", "Spin Dash e Homing Attack") },
+                { text: "2. Tails a Raposa (Voar temporariamente / Gadgets)", action: () => selectCharacter("Tails", "Voo Livre e Mecânica") },
+                { text: "3. Knuckles o Equidna (Força Bruta / Escalar e Planar)", action: () => selectCharacter("Knuckles", "Quebrar Paredes e Planar") },
+                { text: "4. Criar Personagem Customizado...", action: () => showCustomInputs() }
+            ]);
+        }
+
+        // Atualiza a barra de status superior
+        function updateHUD() {
+            hudChar.innerText = gameState.character || "NENHUM";
+            hudZone.innerText = gameState.currentZone;
+            hudRings.innerText = gameState.rings < 10 && gameState.rings >= 0 ? "0" + gameState.rings : gameState.rings;
+        }
+
+        // Altera o texto principal
+        function showText(htmlContent) {
+            textScreen.innerHTML = htmlContent;
+            textScreen.scrollTop = 0;
+        }
+
+        // Atualiza os botões de ação
+        function setChoices(choicesArray) {
+            choicesContainer.innerHTML = "";
+            choicesArray.forEach(choice => {
+                const btn = document.createElement("button");
+                btn.innerHTML = choice.text;
+                btn.onclick = choice.action;
+                choicesContainer.appendChild(btn);
+            });
+        }
+
+        // Lógica de Dano / Perda de Argolas
+        function takeDamage(damageText, recoveryText, nextStepFunction) {
+            if (gameState.rings > 0) {
+                gameState.rings = 0;
+                updateHUD();
+                showText(`💥 <strong>BOOM!</strong> ${damageText}<br><br><span class='highlight'>TRIIIING! Você foi atingido e TODAS as suas argolas voaram para longe!</span> Pelo menos você sobreviveu! <br><br>${recoveryText}`);
+                setChoices([{ text: "Recuperar o fôlego e continuar correndo!", action: nextStepFunction }]);
+            } else {
+                gameOver();
+            }
+        }
+
+        // Game Over
+        function gameOver() {
+            gameState.currentZone = "GAME OVER";
+            updateHUD();
+            showText("💥 <strong>💥 GAME OVER 💥</strong><br><br>Você foi atingido com <span class='highlight'>0 Argolas</span>! O impacto te joga para trás enquanto a tela escurece. Dr. Eggman venceu desta vez e dominou o mundo com seus robôs...");
+            setChoices([{ text: "🔄 Tentar Novamente (Reiniciar)", action: () => {
+                gameState = { character: "", ability: "", rings: 0, currentZone: "MENU", currentStep: "character_select" };
+                customInputContainer.style.display = "none";
+                initGame();
+            }}]);
+        }
+
+        // Seleção de Personagens
+        function selectCharacter(name, ability) {
+            gameState.character = name.toUpperCase();
+            gameState.ability = ability;
+            customInputContainer.style.display = "none";
+            startGreenHill();
+        }
+
+        function showCustomInputs() {
+            textScreen.innerHTML = "<strong>Crie seu próprio herói do universo de Sonic!</strong> Digite os dados abaixo e clique em dar a largada.";
+            choicesContainer.innerHTML = "";
+            customInputContainer.style.display = "flex";
+        }
+
+        function confirmCustomCharacter() {
+            const name = document.getElementById("custom-name").value.trim();
+            const skill = document.getElementById("custom-skill").value.trim();
+            if(!name || !skill) {
+                alert("Por favor, preencha o nome e a habilidade!");
+                return;
+            }
+            selectCharacter(name, skill);
+        }
+
+        // ==================== FASE 1: GREEN HILL ZONE ====================
+        function startGreenHill() {
+            gameState.currentZone = "GREEN HILL";
+            gameState.rings = 10; // Começa com um incentivo!
+            updateHUD();
+
+            showText(`🎵 <em>Green Hill Zone Theme tocando ao fundo!</em><br><br>Você entra na fase como um borrão em alta velocidade! Palmeiras passam voando, o chão quadriculado vibra sob seus pés e você já coleta de cara <span class='highlight'>+10 Argolas!</span><br><br>À sua frente, o caminho se divide: uma rampa superior que leva a um <strong>Looping Gigante</strong>, e um caminho inferior vigiado por um <strong>Motobug</strong> (o badnik de joaninha robô). O que você faz?`);
+
+            setChoices([
+                { text: "🌀 Usar velocidade máxima rumo ao Looping Gigante!", action: stepGreenHillLoop },
+                { text: "💥 Atacar o Motobug diretamente usando sua habilidade!", action: stepGreenHillSubterraneo },
+                { text: "🛑 Parar bruscamente para analisar o cenário estrategicamente", action: stepGreenHillEstrategia }
+            ]);
+        }
+
+        function stepGreenHillLoop() {
+            gameState.rings += 15;
+            updateHUD();
+            showText(`¡WOOOOSH! Você corre tão rápido que desafia a gravidade, passando pelo teto do loop perfeitamente! No topo, você quebra uma caixa de item e ganha <span class='highlight'>+15 Argolas!</span><br><br>Ao sair do loop, uma <strong>Mola Vermelha</strong> te arremessa alto em direção a um penhasco, mas você avista o Dr. Eggman flutuando em sua Egg Mobile com uma enorme bola de demolição acorrentada! Ele grita: <em>"Ora, ora... veja se não é o rato insolente!"</em>`);
+
+            setChoices([
+                { text: "⚔️ Usar o impulso do salto e atacar a cabine do Eggman!", action: stepBossEggmanDireto },
+                { text: "🛡️ Desviar no ar e tentar cair em uma plataforma segura", action: stepBossEggmanDesvio }
+            ]);
+        }
+
+        function stepGreenHillSubterraneo() {
+            showText(`Você avança ferozmente! Usando seu <strong>${gameState.ability}</strong>, você esmaga o Motobug em pedaços! Um pequeno passarinho sai voando de dentro dos destroços, livre e salvo.<br><br>Porém, a explosão te joga em uma caverna subterrânea cheia de espinhos pontiagudos! Há uma parede rachada à direita e uma mola no chão à esquerda.`);
+
+            setChoices([
+                { text: "🧱 Forçar a passagem pela parede rachada", action: () => {
+                    if(gameState.character === "KNUCKLES" || gameState.character === "TAILS") {
+                        showText("Sua força/inteligência permitiu quebrar a parede facilmente! Você encontrou um atalho seguro para o chefe!");
+                        stepBossEggmanDireto();
+                    } else {
+                        takeDamage("Você bateu de cara na parede de pedra sólida!", "A parede não quebrou, mas a mola te jogou para fora da caverna até o chefe!", stepBossEggmanDesvio);
+                    }
+                }},
+                { text: "Spring! Usar a mola esquerda para subir correndo", action: stepGreenHillLoop }
+            ]);
+        }
+
+        function stepGreenHillEstrategia() {
+            showText("Você para bruscamente com os pés cantando no chão. Mas lembre-se: <em>esse jogo é sobre velocidade!</em> Ao ficar parado, um Badnik abelha (Buzz Bomber) surge do nada nos céus e dispara um projétil de energia certeiro em você!");
+            
+            takeDamage("O laser da abelha te acertou em cheio pelas costas!", "Você recupera o foco e sai correndo em disparada em direção ao confronto contra Eggman!", stepBossEggmanDesvio);
+        }
+
+        // ==================== CHEFE GREEN HILL ====================
+        function stepBossEggmanDireto() {
+            showText(`Com precisão cirúrgica, você se joga contra a cabine do vilão. O impacto faz a Egg Mobile soltar faíscas! Eggman se desespera: <em>"Maldito! Não pense que me venceu!"</em>. <br><br>Ele aciona os propulsores e foge em direção a uma fábrica escura no horizonte, deixando para trás o container principal cheinho de animais aprisionados!`);
+
+            setChoices([
+                { text: "🔓 Pular no botão e libertar todos os animais!", action: vitoriaGreenHill }
+            ]);
+        }
+
+        function stepBossEggmanDesvio() {
+            showText(`A gigantesca bola de ferro de Eggman passa raspando por você e destrói o chão! Você consegue pousar na grama, mas está encurralado na beira do precipício. Eggman gargalha, preparando o golpe final com a bola demolidora!`);
+
+            setChoices([
+                { text: "⚡ Usar o cenário: Pegar impulso em uma rampa e atacar com tudo!", action: stepBossEggmanDireto },
+                { text: "🏃 Fugir correndo por baixo das pernas da engenhoca", action: () => takeDamage("A corrente da bola de ferro te chicoteou no caminho!", "Mas o impacto te jogou direto no botão de libertar os animais!", vitoriaGreenHill) }
+            ]);
+        }
+
+        function vitoriaGreenHill() {
+            gameState.currentZone = "CHEMICAL PLANT";
+            gameState.rings += 10;
+            updateHUD();
+
+            showText(`✨ <strong>VITÓRIA NA GREEN HILL ZONE!</strong> ✨<br><br>Você pula com tudo em cima do grande botão azul! O container se abre e dezenas de coelhinhos e esquilos saem pulando felizes ao seu redor. <br><br>Mas não há tempo para comemorar! Você persegue o rastro de fumaça de Eggman e cai direto nos canos industriais e tecnológicos da <strong>Chemical Plant Zone</strong>! O perigoso líquido roxo mega-tóxico (Mega Mack) está subindo rapidamente!`);
+
+            setChoices([
+                { text: "🧪 Correr pelos canos amarelos em velocidade sônica para escapar da inundação", action: stepChemicalSonica },
+                { text: "🧗 Procurar uma rota aérea ou escalar as plataformas industriais", action: stepChemicalPlataforma }
+            ]);
+        }
+
+        // ==================== FASE 2: CHEMICAL PLANT & FINAL ====================
+        function stepChemicalSonica() {
+            gameState.rings += 5;
+            updateHUD();
+            showText(`Você vira um borrão azul/colorido passando por tubos de sucção translúcidos em velocidade absurda! Loopings de metal passam voando até que você é cuspido em uma arena de metal suspensa. <br><br>Lá está ele: Dr. Eggman em uma nova máquina equipada com um canhão sugador de químicos perigosos! Ele avisa: <em>"Daqui você não passa vivo!"</em>`);
+
+            setChoices([
+                { text: "💎 Usar o poder máximo da sua Habilidade para destruir o canhão!", action: finalBom },
+                { text: "Ataque frontal simples direto na cabine", action: () => {
+                    if(gameState.rings > 5) {
+                        showText("O canhão de Eggman te atinge com ácido, mas suas argolas te protegem! Você atravessa o escudo dele!");
+                        finalBom();
+                    } else {
+                        takeDamage("O canhão de ácido te vaporizou no ar!", "Você caiu fraco na plataforma, mas consegue dar uma rasteira final no painel elétrico da máquina!", finalNeutro);
+                    }
+                }}
+            ]);
+        }
+
+        function stepChemicalPlataforma() {
+            if(gameState.character === "TAILS" || gameState.character === "KNUCKLES") {
+                showText(`Usando suas habilidades exclusivas de voo/escalada, a subida é moleza! Você escapa do líquido tóxico roxo sem sofrer um arranhão e surpreende o robô de Eggman por trás!`);
+                finalBom();
+            } else {
+                showText(`Você tenta pular de bloco em bloco, mas as plataformas móveis são muito traiçoeiras... O líquido roxo encosta no seu pé!`);
+                takeDamage("O químico tóxico queimou suas argolas!", "Você consegue se arrastar às pressas até a arena final onde Eggman te espera!", finalNeutro);
+            }
+        }
+
+        // ==================== FINAIS DO JOGO ====================
+        function finalBom() {
+            gameState.currentZone = "FINAL BOM";
+            updateHUD();
+            showText(`🏆 <strong>O FINAL HEROICO! (RANK S)</strong><br><br>Com um ataque avassalador usando seu <strong>${gameState.ability}</strong>, a engenhoca de Eggman explode em mil pedaços! O vilão é arremessado longe pelos ares jurando vingança. <br><br>Você salvou todos os animais de Mobius, limpou a Chemical Plant e encerrou o dia com incríveis <strong>${gameState.rings} Argolas</strong> no bolso! Você é uma lenda viva da velocidade!`);
+            setChoices([{ text: "🎮 Jogar Novamente", action: () => location.reload() }]);
+        }
+
+        function finalNeutro() {
+            gameState.currentZone = "FINAL NEUTRO";
+            updateHUD();
+            showText(`✓ <strong>FINAL CONCLUÍDO (RANK C)</strong><br><br>A máquina de Eggman entra em curto-circuito e começa a falhar. O cientista maluco bate em retirada tossindo na fumaça. Você conseguiu sobreviver e deter os planos imediatos dele, mas saiu todo chamuscado e sem nenhuma argola restando. O mundo está salvo por hora... mas Eggman com certeza voltará!`);
+            setChoices([{ text: "🎮 Tentar um Rank Melhor (Jogar de Novo)", action: () => location.reload() }]);
+        }
+
+        // Inicia a aplicação ao carregar a página
+        window.onload = initGame;
+    </script>
+</body>
+</html>
