@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sonic Dash Mini-Game</title>
+    <title>Sonic Dash Mini-Game - Versão Ajustada</title>
     <style>
         body {
             margin: 0;
@@ -30,7 +30,6 @@
             box-shadow: 0 0 20px rgba(0, 85, 255, 0.5);
         }
 
-        /* Nuvens ao fundo */
         .cloud {
             position: absolute;
             background: white;
@@ -38,10 +37,9 @@
             height: 30px;
             border-radius: 20px;
             top: 40px;
-            animation: moveLeft 8s linear infinite;
+            animation: moveLeft 12s linear infinite; /* Nuvens mais lentas */
         }
 
-        /* Chão quadriculado simulado */
         #floor-grid {
             position: absolute;
             bottom: 0;
@@ -52,10 +50,9 @@
                               linear-gradient(45deg, transparent 75%, #4a2f1a 75%), 
                               linear-gradient(-45deg, transparent 75%, #4a2f1a 75%);
             background-size: 30px 30px;
-            animation: scrollBackground 0.5s linear infinite;
+            animation: scrollBackground 0.8s linear infinite; /* Chão correndo mais suave */
         }
 
-        /* O Sonic (Representação Visual Animada) */
         #sonic {
             position: absolute;
             left: 50px;
@@ -65,16 +62,14 @@
             background: #0055ff;
             border-radius: 50%;
             border: 3px solid white;
-            box-shadow: -5px 0 0 #ffcc00; /* Sapato do Sonic */
-            transition: transform 0.1s;
+            box-shadow: -5px 0 0 #ffcc00; 
+            transition: transform 0.12s ease-out;
         }
 
-        /* Animação de corrida do Sonic */
         .running {
-            animation: spin 0.2s linear infinite;
+            animation: spin 0.3s linear infinite; /* Rotação do Sonic mais suave */
         }
 
-        /* Obstáculo Terrestre (Motobug) */
         #obstacle {
             position: absolute;
             right: -40px;
@@ -86,7 +81,6 @@
             border: 2px solid black;
         }
 
-        /* HUD */
         #hud {
             position: absolute;
             top: 10px;
@@ -106,7 +100,6 @@
             align-items: center;
         }
 
-        /* Controles públicos */
         #controls {
             margin-top: 20px;
             display: flex;
@@ -149,11 +142,11 @@
 <body>
 
     <h2 style="margin-bottom: 10px;">🦔 SONIC ACTION DASH 🦔</h2>
-    <p style="margin-bottom: 15px; color: #aaa;">Desvie dos Badniks vermelhos correndo pela Green Hill!</p>
+    <p style="margin-bottom: 15px; color: #aaa;">Versão Ajustada: Ritmo mais tranquilo!</p>
 
     <div id="game-box">
-        <div class="cloud" style="top: 30px; animation-duration: 10s;"></div>
-        <div class="cloud" style="top: 70px; animation-duration: 6s; right: 200px;"></div>
+        <div class="cloud" style="top: 30px; animation-duration: 14s;"></div>
+        <div class="cloud" style="top: 70px; animation-duration: 9s; right: 200px;"></div>
         <div id="floor-grid"></div>
         
         <div id="sonic" class="running"></div>
@@ -180,46 +173,45 @@
         let score = 0;
         let isJumping = false;
         let isGameOver = false;
-        let obstacleSpeed = 5;
+        
+        // MUDANÇAS DE VELOCIDADE AQUI:
+        let initialSpeed = 3.5;  // Começava em 5, agora começa bem mais calmo em 3.5
+        let obstacleSpeed = initialSpeed;
         let obstaclePosition = 600;
 
-        // Loop principal do Jogo
         function gameLoop() {
             if (isGameOver) return;
 
-            // Movimenta o obstáculo para a esquerda
             obstaclePosition -= obstacleSpeed;
             if (obstaclePosition < -40) {
-                obstaclePosition = 600; // Reseta posição
+                obstaclePosition = 600; 
                 score += 10;
                 scoreLabel.innerText = score;
-                // Aumenta a velocidade gradualmente
-                if (obstacleSpeed < 12) obstacleSpeed += 0.5;
+                
+                // O jogo acelera muito menos a cada ponto feito:
+                if (obstacleSpeed < 7.5) obstacleSpeed += 0.2; 
             }
             obstacle.style.left = obstaclePosition + "px";
 
-            // Lógica de Colisão simples
             let sonicBottom = parseInt(window.getComputedStyle(sonic).getPropertyValue("bottom"));
             
-            // Se o obstáculo chegar perto do Sonic e o Sonic não estiver alto o suficiente
-            if (obstaclePosition > 50 && obstaclePosition < 90 && sonicBottom <= 110) {
+            // Margem de colisão ligeiramente ajustada para ser mais justa
+            if (obstaclePosition > 52 && obstaclePosition < 88 && sonicBottom <= 110) {
                 endGame();
             }
 
             requestAnimationFrame(gameLoop);
         }
 
-        // Função de Pular
         function jump() {
             if (isJumping || isGameOver) return;
             isJumping = true;
-            sonic.classList.remove("running"); // Para de girar no ar
+            sonic.classList.remove("running"); 
             
-            // Sobe
-            sonic.style.transform = "translateY(-100px)";
-            sonic.style.bottom = "185px";
+            // O pulo dura um pouquinho mais para dar tempo de desviar fácil
+            sonic.style.transform = "translateY(-105px)";
+            sonic.style.bottom = "190px";
 
-            // Desce após 500 milissegundos
             setTimeout(() => {
                 sonic.style.transform = "translateY(0)";
                 sonic.style.bottom = "85px";
@@ -227,7 +219,7 @@
                     if (!isGameOver) sonic.classList.add("running");
                     isJumping = false;
                 }, 100);
-            }, 400);
+            }, 450); // Tempo no ar suavemente estendido
         }
 
         function endGame() {
@@ -238,7 +230,7 @@
 
         function resetGame() {
             score = 0;
-            obstacleSpeed = 5;
+            obstacleSpeed = initialSpeed;
             obstaclePosition = 600;
             isGameOver = false;
             gameOverScreen.style.display = "none";
@@ -247,14 +239,12 @@
             gameLoop();
         }
 
-        // Atalho no teclado também (Barra de Espaço pula)
         document.addEventListener("keydown", (event) => {
             if (event.code === "Space") {
                 jump();
             }
         });
 
-        // Inicia o jogo
         gameLoop();
     </script>
 </body>
